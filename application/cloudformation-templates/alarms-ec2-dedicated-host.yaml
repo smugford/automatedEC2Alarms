@@ -1,0 +1,41 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Create Alarms For EC2 Dedicated Hosts - 0.0.1
+
+Parameters:
+  HostId:
+    Description: The EC2 dedicated host ID to associate this alarm with.
+    Type: String
+  InstanceType:
+    Description: Instance type to associate this alarm with
+    Type: String
+  Environment:
+    Description: Environment Name
+    Type: String
+
+Resources:
+  DedicatedHostCapacityAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${Environment}-${HostId}-${InstanceType}-Capacity-Alarm
+      ActionsEnabled: true
+      AlarmDescription: !Sub >-
+        {
+          "region": "${AWS::Region}",
+          "description": "EC2 Dedicated Host Available Capacity Alarm",
+          "alarm_name": "DedicatedHostAvailableCapacity-Alarm",
+          "environment": "${Environment}",
+          "account_id": "${AWS::AccountId}",
+          "type": "DedicatedHostCapacity"
+        }
+      Namespace: EC2 Dedicated Hosts
+      MetricName: AvailableCapacity
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 5
+      Unit: Count
+      ComparisonOperator: LessThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceType
+        Value: !Ref InstanceType
+      TreatMissingData: missing

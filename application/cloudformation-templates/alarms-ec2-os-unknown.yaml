@@ -1,0 +1,97 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Create EC2 Alarms For Instances which OS was not determined
+
+Parameters:
+  InstanceId:
+    Description: The EC2 instance ID to associate this alarm with.
+    Type: AWS::EC2::Instance::Id
+  AlarmSnsTopic:
+    Description: SNS Topic for Alarm
+    Type: String
+  Environment:
+    Description: Environment Name
+    Type: String
+  AfterHourTag:
+    Description: after-hours-support tag value
+    Type: String
+    Default: tagNotAvailable
+  ApplicationName:
+    Description: Application Name
+    Type: String
+    Default: appnameNotProvided
+  ApplicationRunbookUrl:
+    Description: URL to application runbook
+    Type: String
+    Default: runbookNotAvailable
+  InstanceName:
+    Description: Instance Name.
+    Type: String
+
+Resources:
+  WindowsCPUUtilizationAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${Environment}-${InstanceId}-CPUUtilization-Alarm
+      ActionsEnabled: true
+      AlarmActions:
+        - !Ref AlarmSnsTopic
+      OKActions:
+        - !Ref AlarmSnsTopic
+      AlarmDescription: !Sub >-
+        {
+          "region": "${AWS::Region}",
+          "description": "EC2 CPUUtilization Alarm",
+          "alarm_name": "CPUUtilization-Alarm",
+          "environment": "${Environment}",
+          "appname": "${ApplicationName}",
+          "URL": "${ApplicationRunbookUrl}",
+          "account_id": "${AWS::AccountId}",
+          "type": "EC2",
+          "instance_name": "${InstanceName}",
+          "after-hours-support": "${AfterHourTag}"
+        }
+      Namespace: AWS/EC2
+      MetricName: CPUUtilization
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 4
+      Threshold: 90
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceId
+      TreatMissingData: breaching
+
+  WindowsStatusCheckFailedAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${Environment}-${InstanceId}-StatusCheckFailed-Alarm
+      ActionsEnabled: true
+      AlarmActions:
+        - !Ref AlarmSnsTopic
+      OKActions:
+        - !Ref AlarmSnsTopic
+      AlarmDescription: !Sub >-
+        {
+          "region": "${AWS::Region}",
+          "description": "EC2 StatusCheckFail",
+          "alarm_name": "StatusCheckFailed-Alarm",
+          "environment": "${Environment}",
+          "appname": "${ApplicationName}",
+          "URL": "${ApplicationRunbookUrl}",
+          "account_id": "${AWS::AccountId}",
+          "type": "EC2",
+          "instance_name": "${InstanceName}",
+          "after-hours-support": "${AfterHourTag}"
+        }
+      Namespace: AWS/EC2
+      MetricName: StatusCheckFailed
+      Statistic: Minimum
+      Period: 300
+      EvaluationPeriods: 5
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Threshold: 1
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceId
+      TreatMissingData: breaching

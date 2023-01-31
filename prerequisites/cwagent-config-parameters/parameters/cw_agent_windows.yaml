@@ -1,0 +1,61 @@
+---
+metrics:
+  append_dimensions:
+    InstanceId: "${aws:InstanceId}"
+    AutoScalingGroupName: "${aws:AutoScalingGroupName}"
+    InstanceType: "${aws:InstanceType}"
+    ImageId: "${aws:ImageId}"
+  metrics_collected:
+    LogicalDisk:
+      metrics_collection_interval: 60
+      resources:
+      - "*"
+      measurement:
+      - "% Free Space"
+    Memory:
+      metrics_collection_interval: 60
+      measurement:
+      - "% Committed Bytes In Use"
+  aggregation_dimensions:
+  - - InstanceId
+  - - AutoScalingGroupName
+  - - InstanceId
+    - instance
+    - objectname
+  - - InstanceId
+    - instance
+logs:
+  logs_collected:
+    files:
+      collect_list:
+      - file_path: c:\inetpub\logs\LogFiles\W3SVC1\*.log
+        log_group_name: IIS
+    windows_events:
+      collect_list:
+      - event_name: System
+        event_format: text
+        event_levels:
+        - VERBOSE
+        - INFORMATION
+        - WARNING
+        - ERROR
+        - CRITICAL
+        log_group_name: System
+      - event_name: Application
+        event_format: text
+        event_levels:
+        - VERBOSE
+        - INFORMATION
+        - WARNING
+        - ERROR
+        - CRITICAL
+        log_group_name: Application
+      - event_name: Security
+        event_format: text
+        event_levels:
+        - VERBOSE
+        - INFORMATION
+        - WARNING
+        - ERROR
+        - CRITICAL
+        log_group_name: Security

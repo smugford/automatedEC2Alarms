@@ -1,0 +1,159 @@
+{
+    "schemaVersion": "2.2",
+    "description": "Upgrades CWAgent by first Uninstalling, then reinstall the latest version of CWAgent Package. Then downloads the Common-Config.toml file from S3, and finally downloads the CWAgent-config file from SSM Parameter store.",
+    "parameters": {
+      "mode": {
+        "allowedValues": [
+          "ec2",
+          "onPremise",
+          "auto"
+        ],
+        "default": "ec2",
+        "description": "Controls platform-specific default behavior such as whether to include EC2 Metadata in metrics.",
+        "type": "String"
+      },
+      "optionalRestart": {
+        "allowedValues": [
+          "yes",
+          "no"
+        ],
+        "default": "yes",
+        "description": "Only for 'configure' actions. If 'yes', restarts the agent to use the new configuration. Otherwise the new config will only apply on the next agent restart.",
+        "type": "String"
+      },
+      "optionalConfigurationSource": {
+        "allowedValues": [
+          "default",
+          "ssm"
+        ],
+        "default": "ssm",
+        "description": "Only for 'configure' action. Store of the configuration. For CloudWatch Agent's defaults, use 'default'",
+        "type": "String"
+      },
+      "action": {
+        "allowedValues": [
+          "configure",
+          "configure (append)",
+          "start",
+          "status",
+          "stop"
+        ],
+        "default": "configure",
+        "description": "The action CloudWatch Agent should take.",
+        "type": "String"
+      },
+      "version": {
+        "default": "",
+        "description": "(Optional) The version of the package to install or uninstall. If you dont specify a version, the system installs the latest published version by default. The system will only attempt to uninstall the version that is currently installed. If no version of the package is installed, the system returns an error.",
+        "type": "String"
+      }
+    },
+    "mainSteps": [
+      {
+        "inputs": {
+          "installationType": "Uninstall and reinstall",
+          "name": "AmazonCloudWatchAgent",
+          "action": "Install",
+          "version": "{{ version }}"
+        },
+        "name": "configurePackage",
+        "action": "aws:configurePackage"
+      },
+      {
+        "inputs": {
+          "runCommand": [
+            " Set-StrictMode -Version 2.0",
+            " $ErrorActionPreference = 'Stop'",
+            " $Cmd = \"${Env:ProgramFiles}\\Amazon\\AmazonCloudWatchAgent\\amazon-cloudwatch-agent-ctl.ps1\"",
+            " if (!(Test-Path -LiteralPath \"${Cmd}\")) {",
+            "     Write-Output 'CloudWatch Agent not installed.  Please install it using the AWS-ConfigureAWSPackage SSM Document.'",
+            "     exit 1",
+            " }",
+            " $Params = @()",
+            " $Action = '{{action}}'",
+            " if ($Action -eq 'configure') {",
+            "     $Action = 'fetch-config'",
+            " } elseif ($Action -eq 'configure (append)') {",
+            "     $Action = 'append-config'",
+            " }",
+            " if ($Action -eq 'fetch-config' -Or $Action -eq 'append-config') {",
+            "     $Config = 'AmazonCloudWatch-windows-config'",
+            "     if ('{{optionalConfigurationSource}}' -eq 'ssm') {",
+            "         if (!(\"${Config}\")) {",
+            "             Write-Output 'SSM Parameter Store name is required when configuring from Parameter Store.'",
+            "             exit 1",
+            "         } else {",
+            "             $Config = \"ssm:${Config}\"",
+            "         }",
+            "     } else {",
+            "         $Config = 'default'",
+            "     }",
+            "     $Params += ('-c', \"${Config}\")",
+            "     if ('{{optionalRestart}}' -eq 'yes') {",
+            "         $Params += '-s'",
+            "     }",
+            " }",
+            " $Params += ('-a', \"${Action}\", '-m', '{{mode}}')",
+            " Invoke-Expression \"& '${Cmd}' ${Params}\"",
+            " Set-StrictMode -Off",
+            " exit $LASTEXITCODE"
+          ]
+        },
+        "name": "ControlCloudWatchAgentWindows",
+        "action": "aws:runPowerShellScript",
+        "precondition": {
+          "StringEquals": [
+            "platformType",
+            "Windows"
+          ]
+        }
+      },
+      {
+        "inputs": {
+          "runCommand": [
+            " #!/bin/sh",
+            " set -e",
+            " set -u",
+            " cmd='/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl'",
+            " if [ ! -x \"${cmd}\" ]; then",
+            "     echo 'CloudWatch Agent not installed.  Please install it using the AWS-ConfigureAWSPackage SSM Document.'",
+            " exit 1",
+            " fi",
+            " action=\"{{action}}\"",
+            " if [ \"${action}\" = 'configure' ]; then",
+            "     action='fetch-config'",
+            " elif [ \"${action}\" = 'configure (append)' ]; then",
+            "     action='append-config'",
+            " fi",
+            " if [ \"${action}\" = 'fetch-config' ] || [ \"${action}\" = 'append-config' ]; then",
+            "     config='AmazonCloudWatch-linux-config'",
+            "     if [ '{{optionalConfigurationSource}}' = 'ssm' ]; then",
+            "         if [ ! \"${config}\" ]; then",
+            "             echo 'SSM Parameter Store name is required when configuring from Parameter Store.'",
+            "             exit 1",
+            "         else",
+            "             config=\"ssm:${config}\"",
+            "         fi",
+            "     else",
+            "         config='default'",
+            "     fi",
+            "     cmd=\"${cmd} -c ${config}\"",
+            "     if [ '{{optionalRestart}}' = 'yes' ]; then",
+            "         cmd=\"${cmd} -s\"",
+            "     fi",
+            " fi",
+            " cmd=\"${cmd} -a ${action} -m {{mode}}\"",
+            " ${cmd}"
+          ]
+        },
+        "name": "ControlCloudWatchAgentLinux",
+        "action": "aws:runShellScript",
+        "precondition": {
+          "StringEquals": [
+            "platformType",
+            "Linux"
+          ]
+        }
+      }
+    ]
+  }

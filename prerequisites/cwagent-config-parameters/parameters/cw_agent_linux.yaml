@@ -1,0 +1,44 @@
+---
+metrics:
+  append_dimensions:
+    InstanceId: "${aws:InstanceId}"
+    AutoScalingGroupName: "${aws:AutoScalingGroupName}"
+    InstanceType: "${aws:InstanceType}"
+    ImageId: "${aws:ImageId}"
+  metrics_collected:
+    mem:
+      metrics_collection_interval: 60
+      measurement:
+      - mem_used_percent
+    disk:
+      metrics_collection_interval: 60
+      resources:
+      - "*"
+      measurement:
+      - used_percent
+      ignore_file_system_types:
+      - cifs
+      - aufs
+      - devtmpfs
+      - overlay
+      - squashfs
+      - tmpfs
+      - shm
+      - rootfs
+      - udev
+    swap:
+      metrics_collection_interval: 60
+      resources:
+      - "*"
+      measurement:
+      - swap_used_percent
+
+  aggregation_dimensions:
+  - - InstanceId
+  - - AutoScalingGroupName
+  - - InstanceId
+    - device
+    - fstype
+    - path
+  - - InstanceId
+    - device

@@ -1,0 +1,16 @@
+{
+  "source": [
+    "aws.rds"
+  ],
+  "detail-type": [
+    "RDS DB Instance Event"
+  ],
+  "detail": {
+    "EventCategories": [
+      "deletion", "notification"
+    ],
+    "Message": [
+      "DB instance deleted", "DB instance stopped"
+    ]
+  }
+}

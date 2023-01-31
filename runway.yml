@@ -1,0 +1,7 @@
+deployments:
+  - modules:
+      - prerequisites/remote-tfstate-bucket
+      - prerequisites/cwagent-config-parameters
+      - application
+    regions:
+      - us-east-1

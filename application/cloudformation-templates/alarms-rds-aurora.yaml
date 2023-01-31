@@ -1,0 +1,257 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Create Alarms for RDS- 1.0.1
+
+Parameters:
+  DBInstanceIdentifier:
+    Description: The DB instance ID to associate this alarm with.
+    Type: String
+  AlarmSnsTopic:
+    Description: SNS Topic for Alarm
+    Type: String
+  Environment:
+    Description: Environment Name
+    Type: String
+  AfterHourTag:
+    Description: after-hours-support tag value
+    Type: String
+    Default: tagNotAvailable
+  ApplicationName:
+    Description: Application Name
+    Type: String
+    Default: appnameNotProvided
+  ApplicationRunbookUrl:
+    Description: URL to application runbook
+    Type: String
+    Default: runbookNotAvailable
+
+Resources:
+  RDSFreeLocalStorage:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${Environment}-${DBInstanceIdentifier}-FreeLocalStorage-Alarm
+      ActionsEnabled: true
+      AlarmActions:
+        - !Ref AlarmSnsTopic
+      OKActions:
+        - !Ref AlarmSnsTopic
+      AlarmDescription: !Sub >-
+        {
+          "region": "${AWS::Region}",
+          "description": "RDS  Free Local Storage Alarm",
+          "alarm_name": "FreeLocalStorage-Alarm",
+          "environment": "${Environment}",
+          "appname": "${ApplicationName}",
+          "URL": "${ApplicationRunbookUrl}",
+          "account_id": "${AWS::AccountId}",
+          "type": "RDS",
+          "after-hours-support": "${AfterHourTag}"
+        }
+      Namespace: AWS/RDS
+      MetricName: FreeLocalStorage
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 5000000000
+      ComparisonOperator: LessThanOrEqualToThreshold
+      Dimensions:
+      - Name: DBInstanceIdentifier
+        Value: !Ref DBInstanceIdentifier
+      TreatMissingData: breaching
+
+  RDSCPUUtilizationAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${Environment}-${DBInstanceIdentifier}-CPUUtilization-Alarm
+      ActionsEnabled: true
+      AlarmActions:
+        - !Ref AlarmSnsTopic
+      OKActions:
+        - !Ref AlarmSnsTopic
+      AlarmDescription: !Sub >-
+        {
+          "region": "${AWS::Region}",
+          "description": "RDS CPUUtilization Alarm",
+          "alarm_name": "CPUUtilization-Alarm",
+          "environment": "${Environment}",
+          "appname": "${ApplicationName}",
+          "URL": "${ApplicationRunbookUrl}",
+          "account_id": "${AWS::AccountId}",
+          "type": "RDS",
+          "after-hours-support": "${AfterHourTag}"
+        }
+      Namespace: AWS/RDS
+      MetricName: CPUUtilization
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 5
+      Threshold: 90
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: DBInstanceIdentifier
+          Value: !Ref DBInstanceIdentifier
+      TreatMissingData: breaching
+
+  RDSFreeableMemory:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${Environment}-${DBInstanceIdentifier}-FreeableMemory-Alarm
+      ActionsEnabled: true
+      AlarmActions:
+        - !Ref AlarmSnsTopic
+      OKActions:
+        - !Ref AlarmSnsTopic
+      AlarmDescription: !Sub >-
+        {
+          "region": "${AWS::Region}",
+          "description": "RDS Freeable Memory Alarm",
+          "alarm_name": "FreeableMemory-Alarm",
+          "environment": "${Environment}",
+          "appname": "${ApplicationName}",
+          "URL": "${ApplicationRunbookUrl}",
+          "account_id": "${AWS::AccountId}",
+          "type": "RDS",
+          "after-hours-support": "${AfterHourTag}"
+        }
+      Namespace: AWS/RDS
+      MetricName: FreeableMemory
+      Statistic: Average
+      Period: 600
+      EvaluationPeriods: 2
+      ComparisonOperator: LessThanOrEqualToThreshold
+      Threshold: 1000000000
+      Dimensions:
+      - Name: DBInstanceIdentifier
+        Value: !Ref DBInstanceIdentifier
+      TreatMissingData: breaching
+
+  RDSDatabaseConnections:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${Environment}-${DBInstanceIdentifier}-DatabaseConnections-Alarm
+      ActionsEnabled: true
+      AlarmActions:
+        - !Ref AlarmSnsTopic
+      OKActions:
+        - !Ref AlarmSnsTopic
+      AlarmDescription: !Sub >-
+        {
+          "region": "${AWS::Region}",
+          "description": "RDS Database Connections Alarm",
+          "alarm_name": "DatabaseConnections-Alarm",
+          "environment": "${Environment}",
+          "appname": "${ApplicationName}",
+          "URL": "${ApplicationRunbookUrl}",
+          "account_id": "${AWS::AccountId}",
+          "type": "RDS",
+          "after-hours-support": "${AfterHourTag}"
+        }
+      Namespace: AWS/RDS
+      MetricName: DatabaseConnections
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 5
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Threshold: 100
+      Dimensions:
+      - Name: DBInstanceIdentifier
+        Value: !Ref DBInstanceIdentifier
+      TreatMissingData: breaching
+
+  RDSDiskQueueDepth:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${Environment}-${DBInstanceIdentifier}-DiskQueueDepth-Alarm
+      ActionsEnabled: true
+      AlarmActions:
+        - !Ref AlarmSnsTopic
+      OKActions:
+        - !Ref AlarmSnsTopic
+      AlarmDescription: !Sub >-
+        {
+          "region": "${AWS::Region}",
+          "description": "RDS Disk Queue Depth Alarm",
+          "alarm_name": "DiskQueueDepth-Alarm",
+          "environment": "${Environment}",
+          "appname": "${ApplicationName}",
+          "URL": "${ApplicationRunbookUrl}",
+          "account_id": "${AWS::AccountId}",
+          "type": "RDS",
+          "after-hours-support": "${AfterHourTag}"
+        }
+      Namespace: AWS/RDS
+      MetricName: DiskQueueDepth
+      Statistic: Average
+      Period: 3600
+      EvaluationPeriods: 4
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Threshold: 3000
+      Dimensions:
+        - Name: DBInstanceIdentifier
+          Value: !Ref DBInstanceIdentifier
+      TreatMissingData: breaching
+
+  RDSReadLatency:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${Environment}-${DBInstanceIdentifier}-ReadLatency-Alarm
+      ActionsEnabled: true
+      AlarmActions:
+        - !Ref AlarmSnsTopic
+      OKActions:
+        - !Ref AlarmSnsTopic
+      AlarmDescription: !Sub >-
+        {
+          "region": "${AWS::Region}",
+          "description": "RDS Read Latency Alarm",
+          "alarm_name": "ReadLatency-Alarm",
+          "environment": "${Environment}",
+          "appname": "${ApplicationName}",
+          "URL": "${ApplicationRunbookUrl}",
+          "account_id": "${AWS::AccountId}",
+          "type": "RDS",
+          "after-hours-support": "${AfterHourTag}"
+        }
+      Namespace: AWS/RDS
+      MetricName: ReadLatency
+      Statistic: Average
+      Period: 3600
+      EvaluationPeriods: 4
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Threshold: 3000
+      Dimensions:
+        - Name: DBInstanceIdentifier
+          Value: !Ref DBInstanceIdentifier
+      TreatMissingData: breaching
+
+  RDSWriteLatency:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${Environment}-${DBInstanceIdentifier}-WriteLatency-Alarm
+      ActionsEnabled: true
+      AlarmActions:
+        - !Ref AlarmSnsTopic
+      OKActions:
+        - !Ref AlarmSnsTopic
+      AlarmDescription: !Sub >-
+        {
+          "region": "${AWS::Region}",
+          "description": "RDS Write Latency Alarm",
+          "alarm_name": "WriteLatency-Alarm",
+          "environment": "${Environment}",
+          "appname": "${ApplicationName}",
+          "URL": "${ApplicationRunbookUrl}",
+          "account_id": "${AWS::AccountId}",
+          "type": "RDS",
+          "after-hours-support": "${AfterHourTag}"
+        }
+      Namespace: AWS/RDS
+      MetricName: WriteLatency
+      Statistic: Average
+      Period: 3600
+      EvaluationPeriods: 4
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Threshold: 3000
+      Dimensions:
+        - Name: DBInstanceIdentifier
+          Value: !Ref DBInstanceIdentifier
+      TreatMissingData: breaching
